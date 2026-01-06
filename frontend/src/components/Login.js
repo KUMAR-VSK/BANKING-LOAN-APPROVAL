@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from '../api';
 
 function Login({ onLogin }) {
   const [formData, setFormData] = useState({
@@ -38,26 +39,14 @@ function Login({ onLogin }) {
     setSuccess('');
 
     try {
-      const response = await fetch('/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      const response = await axios.post('/auth/login', formData);
 
-      if (response.ok) {
-        const data = await response.json();
-        setSuccess('Login successful! Redirecting...');
-        onLogin(data);
-      } else {
-        try {
-          const errorData = await response.json();
-          setError(errorData.error || errorData.message || 'Login failed');
-        } catch (parseError) {
-          setError(`Login failed with status ${response.status}`);
-        }
-      }
+      setSuccess('Login successful! Redirecting...');
+      onLogin(response.data);
     } catch (err) {
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      if (err.response) {
+        setError(err.response.data.error || err.response.data.message || 'Login failed');
+      } else if (err.request) {
         setError('Cannot connect to server. Please check your connection and try again.');
       } else {
         setError('An unexpected error occurred. Please try again later.');
